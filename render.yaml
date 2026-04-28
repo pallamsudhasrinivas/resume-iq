@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: resume-iq
+    runtime: python
+    rootDir: backend
+    buildCommand: |
+      pip install -r requirements.txt
+      cd ../frontend && npm install && npm run build && cp -r dist ../backend/static
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./data/resume_iq.db
+      - key: MAX_RESUMES
+        value: "10"
+      - key: LLM_ENABLED
+        value: "false"
+      - key: LLM_PROVIDER
+        value: openai
+      - key: LLM_API_KEY
+        value: ""
+      - key: LLM_MODEL
+        value: ""
+      - key: LLM_TIMEOUT
+        value: "60"
