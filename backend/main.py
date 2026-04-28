@@ -11,12 +11,14 @@ logging.basicConfig(
     format="%(levelname)s  %(name)s  %(message)s",
 )
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from routers import analyze, dashboard, jds, sessions
+from routers.auth import get_current_user
+import routers.auth as auth_router
 
 app = FastAPI(title="Resume IQ API", version="1.0.0")
 
@@ -28,10 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(analyze.router, prefix="/api")
-app.include_router(sessions.router, prefix="/api")
-app.include_router(dashboard.router, prefix="/api")
-app.include_router(jds.router, prefix="/api")
+# Public — login endpoint, no auth required
+app.include_router(auth_router.router, prefix="/api")
+
+# Protected — all routes require a valid JWT
+_auth = [Depends(get_current_user)]
+app.include_router(analyze.router,   prefix="/api", dependencies=_auth)
+app.include_router(sessions.router,  prefix="/api", dependencies=_auth)
+app.include_router(dashboard.router, prefix="/api", dependencies=_auth)
+app.include_router(jds.router,       prefix="/api", dependencies=_auth)
 
 
 @app.get("/health")
@@ -46,7 +53,6 @@ if _static_dir.is_dir():
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
-        # Let API routes pass through (already handled above)
         file_path = _static_dir / full_path
         if file_path.is_file():
             return FileResponse(str(file_path))

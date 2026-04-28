@@ -2,6 +2,12 @@ import client from './client'
 import type { DashboardStats, JDCandidatesResponse, JDDetail, JDEntry, JDListResponse, Session, SessionListResponse } from '../types'
 
 export const api = {
+  login: async (username: string, password: string): Promise<string> => {
+    const { data } = await client.post<{ access_token: string }>('/auth/login', { username, password })
+    return data.access_token
+  },
+
+
   analyze: async (
     files: File[],
     opts: { jobDescription: string; jdId?: never } | { jdId: string; jobDescription?: never },
